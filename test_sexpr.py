@@ -1,6 +1,8 @@
 import unittest
 
 from roots import list
+from symbol import *
+
 import sexpr
 
 def interned(L):
@@ -8,7 +10,7 @@ def interned(L):
 
 class TestSexpr(unittest.TestCase):
   def testsymbol(self):
-    self.assert_(sexpr.str2sexpr('a')[0] is intern('a'))
+    self.assertEqual(sexpr.str2sexpr('a')[0], Symbol('a'))
 
   def teststring(self):
     self.assertEqual(sexpr.str2sexpr('"1"')[0], '1')
@@ -20,7 +22,7 @@ class TestSexpr(unittest.TestCase):
     self.assertEqual(sexpr.str2sexpr('0.5')[0], 0.5)
 
   def testescape(self):
-    self.assertEqual(sexpr.str2sexpr('\\"string\\"')[0], '"string"')
+    self.assertEqual(sexpr.str2sexpr('\\"string\\"')[0], Symbol('"string"'))
 
   def testemptylist(self):
     self.assertEqual(sexpr.str2sexpr('()')[0], list())
@@ -29,7 +31,8 @@ class TestSexpr(unittest.TestCase):
     self.assertEqual(sexpr.str2sexpr('(1)')[0], list(1))
 
   def testlist(self):
-    self.assertEqual(sexpr.str2sexpr('(a b c)')[0], list('a', 'b', 'c'))
+    self.assertEqual(sexpr.str2sexpr('(a b c)')[0],
+                     list(Symbol('a'), Symbol('b'), Symbol('c')))
 
 if __name__ == '__main__':
   unittest.main()

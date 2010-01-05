@@ -6,6 +6,9 @@
 ##
 ##  Stripped down for Lark by Scott Wolchok.
 
+from roots import cons, list, nconc1
+from string import *
+from symbol import *
 
 class SExprIllegalClosingParenError(ValueError):
   pass
@@ -29,6 +32,7 @@ class SExprReader(object):
   PAREN_END = ')'
   QUOTE = '"'
   ESCAPE = '\\'
+  LISP_QUOTE = '\''
 
   def __init__(self, next_filter,
                comment_begin=COMMENT_BEGIN,
@@ -37,6 +41,7 @@ class SExprReader(object):
                paren_begin=PAREN_BEGIN,
                paren_end=PAREN_END,
                quote=QUOTE,
+               lisp_quote = LISP_QUOTE,
                escape=ESCAPE):
     self.next_filter = next_filter
     self.comment_begin = comment_begin
@@ -45,10 +50,10 @@ class SExprReader(object):
     self.paren_begin = paren_begin
     self.paren_end = paren_end
     self.quote = quote
+    self.lisp_quote = lisp_quote
     self.escape = escape
-    self.special = comment_begin + separator + paren_begin + paren_end + quote + escape
+    self.special = comment_begin + separator + paren_begin + paren_end + quote + escape # + lisp_quote
     self.reset()
-    self.symbols = set()
 
   # called if redundant parantheses are found.
   def illegal_close_quote(self, i):
@@ -64,22 +69,50 @@ class SExprReader(object):
     self.inquote = False                # if within a quote
     self.inescape = False               # if within a escape.
     self.sym = []                       # partially constructed symbol.
-    # NOTICE: None != nil (an empty list)
-    self.build = None                   # partially constructed list.
     self.build_stack = []     # to store a chain of partial lists.
     return self
 
 
-  def close_str(self):
-    # XXX: need mutable strings.
+  def _close_helper(self):
     sym = ''.join(self.sym)
     self.sym = []
     return sym
 
+  def close_str(self):
+    return String(self._close_helper())
+
   def close_symbol(self):
-    sym = intern(self.close_str())
-    self.symbols.add(sym)
-    return sym
+    s = self._close_helper()
+
+    if s == '#t':
+      return True
+    elif s == '#f':
+      return False
+    elif s.startswith('#\\'):
+      rest = s[2:]
+      if rest == 'newline':
+        return '\n'
+      elif rest == 'space':
+        return ' '
+      elif rest == 'return':
+        return '\r'
+      elif rest == 'tab':
+        return '\t'
+      elif len(rest) == 1:
+        return rest
+      else:
+        raise Exception('Illegal character literal %d!' % s)
+    try:
+      return int(s)
+    except ValueError:
+      pass
+
+    try:
+      return float(s)
+    except ValueError:
+      pass
+
+    return Symbol(s)
 
   def feed_next(self, s):
     self.next_filter.feed(s)
@@ -109,10 +142,10 @@ class SExprReader(object):
             sym = self.close_str()
           else:
             sym = self.close_symbol()
-          if self.build is None:
+          if not self.build_stack:
             self.feed_next(sym)
           else:
-            self.build.append(sym)
+            self.build_stack[-1] = nconc1(self.build_stack[-1], sym)
         if c in self.comment_begin:
           # comment
           self.incomment = True
@@ -121,40 +154,27 @@ class SExprReader(object):
           self.inquote = not self.inquote
         elif c in self.paren_begin:
           # beginning a new list.
-          self.build_stack.append(self.build)
-          empty = []
-          if self.build == None:
-            # begin from a scratch.
-            self.build = empty
-          else:
-            # begin from the end of the current list.
-            self.build.append(empty)
-            self.build = empty
+          self.build_stack.append(nil)
         elif c in self.paren_end:
-          # terminating the current list
-          if self.build == None:
+          if not self.build_stack:
             # there must be a working list.
             self.illegal_close_paren(i)
           else:
-            if len(self.build_stack) == 1:
-              # current working list is the last one in the stack.
-              self.feed_next(self.build)
-            self.build = self.build_stack.pop()
+            build = self.build_stack.pop()
+            if self.build_stack:
+              nconc1(self.build_stack[-1], build)
+            else:
+              self.feed_next(build)
     return self
 
   # terminate
   def terminate(self):
     # a working list should not exist.
-    if self.build != None:
+    if self.build_stack:
       # error - still try to construct a partial structure.
       if self.sym:
-        self.build.append(self.close_symbol())
-      if len(self.build_stack) == 1:
-        x = self.build
-      else:
-        x = self.build_stack[1]
-      self.build = None
-      self.build_stack = []
+        self.build_stack[-1].append(self.close_symbol())
+      x = self.build_stack[-1]
       self.premature_eof(len(self.build_stack), x)
     elif self.sym:
       # flush the current working symbol.
@@ -195,22 +215,3 @@ def sexpr2str(e):
   if not isinstance(e, list):
     return e
   return '('+' '.join(map(sexpr2str, e))+')'
-
-
-# test stuff
-def test():
-  assert str2sexpr('"string"') == ['string']
-  assert str2sexpr('\\"string\\"') == ['"string"']
-  assert str2sexpr('(this ;comment\n is (a test (sentences) (des()) (yo)))') == \
-         [['this', 'is', ['a', 'test', ['sentences'], ['des', []], ['yo']]]]
-  assert str2sexpr('''(paren\\(\\)theses_in\\#symbol "space in \nsymbol"
-                   this\\ way\\ also. "escape is \\"better than\\" quote")''') == \
-         [['paren()theses_in#symbol', 'space in \nsymbol', 'this way also.', 'escape is "better than" quote']]
-  assert str2sexpr('()') == [[]]
-#  str2sexpr('(this (is (a (parial (sentence')
-  return  
-
-
-# main
-if __name__ == '__main__':
-  test()
