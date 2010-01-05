@@ -34,5 +34,9 @@ class TestSexpr(unittest.TestCase):
     self.assertEqual(sexpr.str2sexpr('(a b c)')[0],
                      list(Symbol('a'), Symbol('b'), Symbol('c')))
 
+  def testfncall(self):
+    self.assertEqual(sexpr.str2sexpr('((fn (a) a) 1)')[0],
+                     list(list(Symbol('fn'), list(Symbol('a')), Symbol('a')), 1))
+
 if __name__ == '__main__':
   unittest.main()

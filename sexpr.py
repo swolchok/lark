@@ -162,7 +162,7 @@ class SExprReader(object):
           else:
             build = self.build_stack.pop()
             if self.build_stack:
-              nconc1(self.build_stack[-1], build)
+              self.build_stack[-1] = nconc1(self.build_stack[-1], build)
             else:
               self.feed_next(build)
     return self
