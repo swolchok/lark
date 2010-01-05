@@ -1,0 +1,29 @@
+Sadly, all of the below is necessary to even think about running
+arc.arc. I might kludge in some things just so I can see arc.arc run,
+which would do a lot for my motivation to work on the project.
+
+* Proper lexical scoping
+  If possible, we'd like to push this to Python instead of building
+  scope chains ourselves like PyScheme's environment.py. The current
+  implementation's semantics are very likely to be bogus.
+
+  Python 3's nonlocal may help here, but I don't want to move to
+  Python 3. We'll lose Unladen Swallow. OTOH, it looks impossible to
+  hack nonlocal support together in a reasonable way in Python itself
+  (changeset implementing nonlocal is at
+  http://svn.python.org/view?view=rev&revision=53986). With nonlocal,
+  I think we can push Scheme/Arc lexical scoping down to Python using
+  Arc's trick of keeping a stack of names, although we'll have to
+  distinguish the local environment.
+
+* Quasiquote support
+  Not implemented at all. Shouldn't be too bad, I think Arc has a full
+  implementation.
+
+* Simple expansion in the reader
+  Support Arc's "~", "'", "`", ",", ",@" operators.
+
+* More complicated expansion in the reader
+  Support Arc's ":" operator. 
+
+* Macro expansion.
