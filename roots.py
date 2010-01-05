@@ -3,16 +3,26 @@ Let's see how far we can get embedding an Arc-like Lisp in Python.
 '''
 from symbol import *
 
+# Functions we'll expose eventually need to be defined with def or they
+# won't have names.
+
 # We can't use tuples here because we need mutable cons cells.
 # Objects are big and slow.
-cons = lambda x, y: [x,y]
-car = lambda x: x[0]
-cdr = lambda x: x[1]
+def cons(x,y):
+  return [x, y]
+def car(x):
+  return x[0]
+def cdr(x):
+  return x[1]
 
-caar = lambda x: x[0][0]
-cadr = lambda x: x[1][0] # car of cdr.
-cdar = lambda x: x[0][1]
-cddr = lambda x: x[1][1]
+def caar(x):
+  return x[0][0]
+def cadr(x):
+  return x[1][0]
+def cdar(x):
+  return x[0][1]
+def cddr(x):
+  return x[1][1]
 
 pylist = list
 
@@ -20,8 +30,11 @@ pylist = list
 # eventually, and those are probably atoms. Let's just get it working
 # and then we'll worry about the distinction; the associated car/cdr
 # implementations are bad too.
-acons = lambda x: isinstance(x, pylist) and len(x) == 2
-atom = lambda x: not acons(x)
+def acons(x): 
+  return isinstance(x, pylist) and len(x) == 2
+
+def atom(x):
+  return not acons(x)
 
 # Readable types:
 # - lists
@@ -53,8 +66,8 @@ def revappend(x, y):
 #     return y
 #   return revappend(cdr(x), cons(car(x), y))
   while x is not nil:
-    x = cdr(x)
     y = cons(car(x), y)
+    x = cdr(x)
   return y
 
 def reverse(x):

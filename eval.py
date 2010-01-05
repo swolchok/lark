@@ -18,11 +18,13 @@ xcar = lambda x: car(x) if acons(x) else None
 def ac_global_name(s):
   return Symbol('_' + str(s))
 
+EXPOSED_FUNCTIONS = (car, cdr, caar, cadr, cdar, cddr, cons,
+                     list, last, append, reverse, nconc, nconc1,
+                     map)
 
-arc_globals = dict((ac_global_name(sym), value) for sym, value in [
-    (t, t),
-    (Symbol('car'), car)
-    ])
+arc_globals = dict((ac_global_name(Symbol(f.func_name)), f) for f in EXPOSED_FUNCTIONS)
+arc_globals[t] = t
+arc_globals[ac_global_name(Symbol('+'))] = lambda *args: sum(args) 
                    
 
 class InterpretedFunction(object):
@@ -52,8 +54,8 @@ def ac_eval(s, env):
     return ac_if(cdr(s), env)
   elif xcar(s) == Symbol('fn'):
    return ac_fn(cadr(s), cddr(s), env)
-#  elif xcar(s) == Symbol('assign'):
-#    return ac_set(cdr(s), env)
+  elif xcar(s) == Symbol('assign'):
+    return ac_set(cdr(s), env)
   elif acons(s):
     print 'DEBUG: funcall'
     return ac_call(car(s), cdr(s), env)
@@ -67,12 +69,14 @@ def literal(x):
 
 def ac_var_ref(s, env):
   assert isSymbol(s)
-  print 'Referencing %s (type %s) in  with keys' % (s, type(s)),
+  print 'DEBUG: Referencing %s (type %s) in env with keys' % (s, type(s)),
   for key in env:
     print key, type(key)
   if s in env:
     return env[s]
-  return arc_globals[ac_global_name(s)]
+  glo = arc_globals[ac_global_name(s)]
+  print 'DEBUG: returning global %s' % glo
+  return glo
 
 
 # Should False Python objects be false eventually?
@@ -111,6 +115,38 @@ def ac_body(body, env):
   return car(revmap(lambda x: ac_eval(x, env), body))
 
 
+# Elided ac_setn; it's ac_set.
+def ac_set(x, env):
+  if x is nil:
+    return nil
+  return cons(ac_set1(ac_macex(car(x)), cadr(x), env),
+              ac_set(cddr(x), env))
+
+
+def ac_set1(a, b1, env):
+  # Omitting dbname because it's done in ac_fn too.
+  if isSymbol(a):
+    b = ac_eval(b1, env)
+    if a is nil:
+      raise Exception('Can\'t rebind nil')
+    elif a is t:
+      raise Exception('Can\'t rebind t')
+    elif a in env:
+      env[a] = b
+    else:
+      arc_globals[ac_global_name(a)] = b
+  else:
+    raise Exception('First arg to set must be a symbol! (Given %s)' % a)
+
+
+def ac_macex(x):
+  # STUB. TODO.
+  if isSymbol(x):
+    return x
+  else:
+    raise NotImplementedError()
+
+
 def ac_complex_args(args):
   '''Does a fn arg list use optional params or destructuring?'''
   if args is nil or isSymbol(args):
@@ -122,7 +158,7 @@ def ac_complex_args(args):
 
 
 def ac_call(fn, args, env):
-  return ac_eval(fn, env)(*topylist(args))
+  return ac_eval(fn, env)(*topylist(map(lambda x: ac_eval(x, env), args)))
 
 
 def tle():
