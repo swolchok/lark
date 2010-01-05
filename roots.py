@@ -29,14 +29,14 @@ atom = lambda x: not acons(x)
 # - numbers as in Python
 # - symbols
 
-def _topylist(L):
+def topylist(L):
   acc = []
   while L is not nil:
     acc.append(car(L))
     L = cdr(L)
   return acc
 
-def _toarclist(L):
+def toarclist(L):
   res = nil
   for x in reversed(L):
     res = cons(x, res)
@@ -46,6 +46,22 @@ def last(x):
   while cdr(x) is not nil:
     x = cdr(x)
   return x
+
+
+def revappend(x, y):
+#   if x is nil:
+#     return y
+#   return revappend(cdr(x), cons(car(x), y))
+  while x is not nil:
+    x = cdr(x)
+    y = cons(car(x), y)
+  return y
+
+def reverse(x):
+  return revappend(x, nil)
+
+def append(x, y):
+  return revappend(reverse(x), y)
 
 def nconc(x, y):
   if x is nil:
@@ -59,4 +75,20 @@ def nconc1(x, y):
   return nconc(x, list(y))
 
 def list(*args):
-  return _toarclist(args)
+  return toarclist(args)
+
+def revmap(func, L):
+#   def rec(func, L, acc):
+#     if L is nil:
+#       return acc
+#     return rec(func, cdr(L), cons(func(car(L)), acc))
+#   return rec(func, L, nil)
+  acc = nil
+  while L is not nil:
+    acc = cons(func(car(L)), acc)
+    L = cdr(L)
+  return acc
+
+def map(func, L):
+  # TODO: nreverse.
+  return reverse(revmap(func, L))
