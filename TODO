@@ -20,6 +20,9 @@ which would do a lot for my motivation to work on the project.
   Not implemented at all. Shouldn't be too bad, I think Arc has a full
   implementation.
 
+* Symbol-escape support in the reader
+  The | character.
+
 * Simple expansion in the reader
   Support Arc's "~", "'", "`", ",", ",@" operators.
 
@@ -27,3 +30,11 @@ which would do a lot for my motivation to work on the project.
   Support Arc's ":" operator. 
 
 * Macro expansion.
+
+
+Nice to have:
+
+* Expose more of Python in a sane way.
+
+* Decide what, if anything, to do about tail calls.
+  Python doesn't optimize them.
