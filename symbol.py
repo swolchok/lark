@@ -29,7 +29,7 @@ Ripped off from PyScheme by Scott Wolchok.
 __license__ = "MIT License"
 
 
-from UserString import UserString as __UserString
+import collections
 import weakref
 
 __all__ = ['Symbol', 'isSymbol', 'nil', 't']
@@ -39,8 +39,19 @@ __all__ = ['Symbol', 'isSymbol', 'nil', 't']
 CASE_SENSITIVE = 0
 
 
-class __Symbol(__UserString):
+class _Symbol(collections.UserString):
     """Support class for symbols."""
+    def __init__(self, seq):
+        if isinstance(seq, str):
+            seq = bytes(seq, 'utf-8')
+        else:
+            seq = bytes(seq)
+        collections.UserString.__init__(self, seq)
+        hash(seq)
+        hash(self)
+
+    def __hash__(self):
+        return hash(self.data)
     def __eq__(self, other):
         """Comparison should only be possible between symbols.  Since all
         Symbols are interned, this is equivalent to an 'is' check."""
@@ -61,18 +72,18 @@ def Symbol(s):
     global __interned_symbols
 
     ## Defensive programming measure:
-    assert not isinstance(s, __Symbol), ("%s already a symbol!" % s)
+    assert not isinstance(s, _Symbol), ("%s already a symbol!" % s)
 
     if not CASE_SENSITIVE: s = s.lower()
-    if not __interned_symbols.has_key(s):
+    if s not in __interned_symbols:
         ## Subtle note: we have to use a local variable here to store the newSymbol.
         ## If we had tried something shorter like:
         ##
-        ##     __interned_symbol[s] = __Symbol(s)
+        ##     __interned_symbol[s] = _Symbol(s)
         ##
         ## then the new Symbol will immediately evaporate since there
         ## aren't any hard references!  Weak references can be tricky.
-        newSymbol = __Symbol(s)
+        newSymbol = _Symbol(s)
         __interned_symbols[s] = newSymbol
     return __interned_symbols[s]
 
@@ -80,11 +91,11 @@ def Symbol(s):
 
 
 """Here are definitions of symbols that we should know about."""
-false = Symbol("#f")
-true = Symbol("#t")
-nil = Symbol('nil')
-t = Symbol('t')
-__empty_symbol = Symbol("")
+false = Symbol(b"#f")
+true = Symbol(b"#t")
+nil = Symbol(b'nil')
+t = Symbol(b't')
+__empty_symbol = Symbol(b"")
 
 
 def isSymbol(x):
@@ -102,6 +113,6 @@ def makeUniqueTemporary(_counter = [0]):
     allow such symbols to exist... although it's possible to subvert this
     by calling STRING->SYMBOL.  So this mechanism is not perfect.
     """
-    while ('%d*** temporary' % _counter[0]) in __interned_symbols:
+    while (b'%d*** temporary' % _counter[0]) in __interned_symbols:
         _counter[0] += 1
-    return Symbol('%d*** temporary' % _counter[0])
+    return Symbol(b'%d*** temporary' % _counter[0])

@@ -4,16 +4,17 @@ from roots import list
 from symbol import *
 
 import sexpr
+import sys
 
 def interned(L):
-  return [intern(x) for x in L]
+  return [sys.intern(x) for x in L]
 
 class TestSexpr(unittest.TestCase):
   def testsymbol(self):
     self.assertEqual(sexpr.str2sexpr('a')[0], Symbol('a'))
 
   def teststring(self):
-    self.assertEqual(sexpr.str2sexpr('"1"')[0], '1')
+    self.assertEqual(sexpr.str2sexpr('"1"')[0], b'1')
 
   def testnum(self):
     self.assertEqual(sexpr.str2sexpr('1')[0], 1)

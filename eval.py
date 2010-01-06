@@ -22,7 +22,7 @@ EXPOSED_FUNCTIONS = (car, cdr, caar, cadr, cdar, cddr, cons,
                      list, last, append, reverse, nconc, nconc1,
                      map)
 
-arc_globals = dict((ac_global_name(Symbol(f.func_name)), f) for f in EXPOSED_FUNCTIONS)
+arc_globals = dict((ac_global_name(Symbol(f.__name__)), f) for f in EXPOSED_FUNCTIONS)
 arc_globals[ac_global_name(t)] = t
 arc_globals[ac_global_name(Symbol('+'))] = lambda *args: sum(args) 
                    
@@ -38,7 +38,7 @@ class InterpretedFunction(object):
 # Arc just has a list because Scheme actually keeps track of the variables and
 # values, but in Lark we keep track of them ourselves.
 def ac_eval(s, env):
-  print 'DEBUG: eval %s in %s' % (s, env)
+  print('DEBUG: eval %s in %s' % (s, env))
   if isinstance(s, String):
     return s
   elif literal(s):
@@ -46,7 +46,7 @@ def ac_eval(s, env):
   elif s is nil:
     return s
   elif isSymbol(s):
-    print 'DEBUG: var ref'
+    print('DEBUG: var ref')
     return ac_var_ref(s, env)
   elif xcar(s) == Symbol('quote'):
     return cadr(s)
@@ -57,7 +57,7 @@ def ac_eval(s, env):
   elif xcar(s) == Symbol('assign'):
     return ac_set(cdr(s), env)
   elif acons(s):
-    print 'DEBUG: funcall'
+    print('DEBUG: funcall')
     return ac_call(car(s), cdr(s), env)
   else:
     raise Exception('Bad object in expression %s (type %s)' % (s, type(s)))
@@ -69,13 +69,13 @@ def literal(x):
 
 def ac_var_ref(s, env):
   assert isSymbol(s)
-  print 'DEBUG: Referencing %s (type %s) in env with keys' % (s, type(s)),
+  print('DEBUG: Referencing %s (type %s) in env with keys' % (s, type(s)), end=' ')
   for key in env:
-    print key, type(key)
+    print(key, type(key))
   if s in env:
     return env[s]
   glo = arc_globals[ac_global_name(s)]
-  print 'DEBUG: returning global %s' % glo
+  print('DEBUG: returning global %s' % glo)
   return glo
 
 
@@ -101,7 +101,7 @@ def ac_fn(args, body, env):
     return lambda *args: nil
   else:
     env = env.copy() # Not sure if this is necessary. Being paranoid.
-    print 'DEBUG: define function with argslist %s' % args
+    print('DEBUG: define function with argslist %s' % args)
     assert isSymbol(xcar(args))
     def temp(*fargs):
       env.update(zip(args, fargs))
@@ -163,9 +163,9 @@ def ac_call(fn, args, env):
 
 def tle():
   while True:
-    print 'Lark> ',
-    expr = str2sexpr(raw_input())[0]
-    print ac_eval(expr, {})
+    print('Lark> ', end=' ')
+    expr = str2sexpr(input())[0]
+    print(ac_eval(expr, {}))
 
 
 if __name__ == '__main__':

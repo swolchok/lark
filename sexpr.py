@@ -6,8 +6,8 @@
 ##
 ##  Stripped down for Lark by Scott Wolchok.
 
+from larktypes import *
 from roots import cons, list, nconc1
-from string import *
 from symbol import *
 
 class SExprIllegalClosingParenError(ValueError):
@@ -74,7 +74,9 @@ class SExprReader(object):
 
 
   def _close_helper(self):
-    sym = ''.join(self.sym)
+    # XXX: And lo, the non-English-speaking countries were pissed,
+    # and rightly so, for the length of Unicode strings was not in characters.
+    sym = b''.join(bytes(x, 'utf-8') for x in self.sym)
     self.sym = []
     return sym
 
@@ -84,22 +86,22 @@ class SExprReader(object):
   def close_symbol(self):
     s = self._close_helper()
 
-    if s == '#t':
+    if s == b'#t':
       return True
-    elif s == '#f':
+    elif s == b'#f':
       return False
-    elif s.startswith('#\\'):
+    elif s.startswith(b'#\\'):
       rest = s[2:]
-      if rest == 'newline':
-        return '\n'
-      elif rest == 'space':
-        return ' '
-      elif rest == 'return':
-        return '\r'
-      elif rest == 'tab':
-        return '\t'
+      if rest == b'newline':
+        return String('\n')
+      elif rest == b'space':
+        return String(' ')
+      elif rest == b'return':
+        return String('\r')
+      elif rest == b'tab':
+        return String('\t')
       elif len(rest) == 1:
-        return rest
+        return String(rest)
       else:
         raise Exception('Illegal character literal %d!' % s)
     try:
