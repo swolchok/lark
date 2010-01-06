@@ -23,7 +23,7 @@ EXPOSED_FUNCTIONS = (car, cdr, caar, cadr, cdar, cddr, cons,
                      map)
 
 arc_globals = dict((ac_global_name(Symbol(f.func_name)), f) for f in EXPOSED_FUNCTIONS)
-arc_globals[t] = t
+arc_globals[ac_global_name(t)] = t
 arc_globals[ac_global_name(Symbol('+'))] = lambda *args: sum(args) 
                    
 
