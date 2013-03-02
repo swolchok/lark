@@ -7,7 +7,7 @@
 ##  Stripped down for Lark by Scott Wolchok.
 
 from roots import cons, list, nconc1
-from string import *
+from larktypes import String
 from symbol import *
 
 class SExprIllegalClosingParenError(ValueError):
